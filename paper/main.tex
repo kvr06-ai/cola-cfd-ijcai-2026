@@ -1,5 +1,6 @@
-%%%% main.tex --- IJCAI-ECAI 2026 CFD Workshop submission
+%%%% main.tex (workshop submission)
 %%%% Carry-Over Lottery Allocation: family + manipulation bound
+%%%% IJCAI-ECAI 2026 CFD Workshop
 
 \typeout{IJCAI-ECAI 26 CFD Workshop submission}
 
@@ -47,9 +48,7 @@
 \newcommand{\Prob}{\mathbb{P}}
 
 % Required PDF info per IJCAI template (pdftex primitive).
-% Guard against engines without \pdfinfo (e.g., XeTeX-based tectonic)
-% so the document still compiles for local preview. Reviewers will use
-% pdftex / pdflatex which honors this primitive.
+% Guarded for engines without \pdfinfo (e.g., XeTeX-based tectonic).
 \makeatletter
 \@ifundefined{pdfinfo}{\def\pdfinfo#1{}}{}
 \makeatother
@@ -57,7 +56,7 @@
 /TemplateVersion (IJCAI.2026.0)
 }
 
-\title{An Analytic Manipulation Bound for the Carry-Over Lottery Allocation Family}
+\title{An Analytic Manipulation Bound for the\\Carry-Over Lottery Allocation Family}
 
 \author{
 Timothy Highley$^1$
@@ -76,53 +75,65 @@ highley@lasalle.edu, kaushi@alumni.ncsu.edu
 \maketitle
 
 \begin{abstract}
-The National Basketball Association (NBA) draft lottery is a fair-allocation problem with a documented manipulation incentive: teams eliminated from playoff contention can improve their expected draft position by losing additional games. \citet{munro2020notanking} prove an impossibility result: no mechanism mapping end-of-season records to draft probabilities can simultaneously reward poor performance and eliminate this incentive. Carry-Over Lottery Allocation (\cola{}) sidesteps the impossibility by replacing single-season records with multi-year playoff history as the basis for draft priority \citep{highley2026cola}. The mechanism's incentive-compatibility argument relies on five assumptions, four of which hold by construction; the fifth---that pool-manipulation gains are negligible---is supported by simulation but lacks a closed-form bound. We make two contributions. First, we derive an analytic upper bound of approximately 4\% on the worst-case probability gain from pool manipulation under empirically calibrated index distributions, with a closed-form sensitivity to the underlying parameters. Second, we present a brief historical backtest (26 NBA seasons, five variants) and an analytic per-series bound for Capped \cola{}, the variant introduced in response to recent NBA reform discussions. We also surface an open mapping between the \cola{} family and the axiomatic draft-rule literature \citep{coreno2022axiomatic}.
+The annual NBA draft is a constrained fair-allocation problem: 30 indivisible draft picks must be assigned to 30 teams in priority order, with the top picks reserved for a lottery confined to the 14 non-playoff teams. The lottery has a documented manipulation incentive (``tanking''): a team eliminated from playoff contention can improve its expected draft position by losing additional games. \citet{munro2020notanking} prove an impossibility result, showing that no mechanism based on end-of-season records alone can simultaneously reward poor performance and eliminate this incentive. Carry-Over Lottery Allocation (\cola{}) sidesteps the impossibility by replacing single-season records with a multi-year playoff history as the basis for draft priority \citep{highley2026cola}. The incentive-compatibility argument for \cola{} relies on five assumptions, four of which hold by construction; the fifth (that pool-manipulation gains are negligible) is supported by simulation in the original paper but lacks a closed-form bound. We make three contributions. First, we derive an analytic upper bound of approximately $4\%$ on the worst-case probability gain from pool manipulation under empirically calibrated index distributions, with explicit sensitivity to the underlying parameters. Second, we present the \cola{} family as five variants on a shared scaffold, including \emph{Capped \cola{}} (a recent variant designed in response to NBA reform discussions), and prove an analytic per-series bound on its playoff-tanking exposure. Third, we surface an open mapping between \cola{} and the axiomatic draft-rule literature \citep{coreno2022axiomatic}, asking whether the Respect-for-Priority and Envy-Free-up-to-One-Object axioms lift from single-period priority mechanisms to multi-year history. The bounds and family taxonomy together formalise the manipulation-resistance properties that any future re-evaluation of NBA draft reform (the recently-adopted 3-2-1 proposal expires in 2029) will need.
 \end{abstract}
 
 \section{Introduction}
 
-The annual NBA draft allocates a small number of indivisible items (draft picks) to a fixed set of agents (the league's 30 teams). Among the 30 teams, the 14 that miss the playoffs participate in a lottery for the top picks; the rest receive picks in reverse order of regular-season record. The lottery is the focus of our paper because it carries the policy weight: it determines who gets the franchise-altering top picks each year, and its design has been revised three times in 60 years to address an empirically observed manipulation incentive known as \emph{tanking}. A team eliminated from playoff contention can improve its expected draft position by losing additional games, and the design of any priority rule must contend with this.
+In the 2024-25 NBA season, multiple teams were publicly accused of tanking for the chance to draft Cooper Flagg. The accusations did not name a small minority: by some counts, roughly a third of the league's 30 teams were openly losing games at season's end to improve their lottery odds. The 2026 reform vote that followed produced ``3-2-1,'' a proposal that expands the lottery to 16 teams with bounded ball allocation across tiers \citep{highley2026solvable5}. The proposal includes a three-year re-evaluation provision, which means the design discussion will reopen in 2029.
 
-\citet{munro2020notanking} formalise the tension as an impossibility. They define a \emph{No-Tanking Condition} (NTC): no team can improve its expected outcome by losing. Under NTC and the requirement that worse-record teams receive strictly better draft odds, only a uniform lottery (equal odds for all non-playoff teams) survives---abandoning the goal of helping the weakest teams. The 2026 NBA reform proposal known as ``3-2-1'' takes precisely this route, with adjustments for play-in-tournament eligibility \citep{highley2026solvable5}.
+The annual NBA draft is a constrained fair-allocation problem. Thirty indivisible items (draft picks) are assigned to 30 agents (teams) in priority order. Picks 15--30 are assigned by reverse regular-season record. Picks 1--14 are subject to a lottery confined to the 14 non-playoff teams, with weighted odds favouring (in the current system, the bottom three weighted equally and the rest declining). Throughout, the question is the same: how to assign indivisible items to agents while (a) preferentially rewarding the weakest agents, (b) eliminating the incentive to under-perform, and (c) producing a mechanism transparent enough that fans, owners, and players can reason about it.
 
-Carry-Over Lottery Allocation (\cola{}) sidesteps the impossibility by replacing single-season records with multi-year playoff history as the basis for draft priority \citep{highley2026cola}. Each non-playoff team accumulates lottery tickets over consecutive seasons of missed playoffs; success in the playoffs or in the draft itself diminishes a team's accumulated tickets. The single-season manipulation channel that drives the Munro-Banchio counterexample becomes ineffective because no single-season choice materially shifts the multi-year ticket pool.
+\citet{munro2020notanking} formalise the central tension as an impossibility. Define a \emph{No-Tanking Condition} (NTC): no team can improve its expected outcome by losing. Any mechanism mapping end-of-season records to draft probabilities, while giving worse-record teams strictly better odds, must violate NTC. Their proof constructs a minimal counterexample (two teams, both eliminated, identical records, final game between them), so the loser receives better draft odds and both teams prefer to lose. Only a uniform lottery (equal odds for all non-playoff teams) satisfies NTC, abandoning differential reward. The 2026 ``3-2-1'' proposal takes precisely this route, with adjustments for the play-in tournament \citep{highley2026solvable5}.
 
-\paragraph{Our contributions.}
+Carry-Over Lottery Allocation (\cola{}) sidesteps the impossibility by replacing single-season records with multi-year playoff history as the basis for draft priority \citep{highley2026cola}. Each non-playoff team accumulates lottery tickets over consecutive seasons; success in the playoffs or the draft itself diminishes a team's accumulated tickets. The single-season manipulation channel that drives the Munro-Banchio counterexample becomes ineffective: no single-season choice materially shifts the multi-year ticket pool. \cola{} is a family of mechanisms rather than a single design; the original paper develops one concrete instance (\emph{Classic \cola{}}), and subsequent work introduces variants that occupy different points on the explainability--robustness frontier.
+
+\paragraph{Contributions.} We address three questions in this paper.
 \begin{itemize}
-    \item \textbf{An analytic manipulation bound.} \cola{}'s incentive-compatibility argument rests on five assumptions, four of which hold by construction. The fifth---pool manipulation gains are negligible---is supported in the original paper by simulation over 1{,}000 synthetic seasons. We derive a closed-form upper bound of approximately 4\% on the worst-case probability gain, with explicit sensitivity to the underlying index-distribution parameters (Section~\ref{sec:bound}). The bound contains the simulation-observed extremes and provides the first parameter-explicit ceiling.
-    \item \textbf{A family-level perspective.} We present the \cola{} mechanism family (Section~\ref{sec:family}) as five variants on a shared scaffold, including \emph{Capped \cola{}}, the variant introduced in response to NBA-side feedback to bound the per-series cost of advancing in the playoffs. We derive an analytic per-series bound for Capped \cola{} (Lemma~\ref{lem:capped-bound}). Empirical results from a 26-season historical backtest (Section~\ref{sec:empirical}) calibrate the bounds.
-    \item \textbf{A bridge to the axiomatic fair-division literature.} \citet{coreno2022axiomatic} establish an impossibility for draft rules satisfying Respect for Priority, Envy-Free up to One Object, and Strategy-Proofness simultaneously. We surface a preliminary mapping between \cola{}'s priority structure and these axioms (Section~\ref{sec:fairdiv}) as an invitation for further axiomatic analysis.
+    \item \textbf{(Section~\ref{sec:bound}) An analytic manipulation bound.} \cola{}'s incentive-compatibility argument rests on five assumptions; four hold by construction, the fifth is supported empirically. We derive a closed-form upper bound of approximately $4\%$ on the worst-case probability gain from pool manipulation, with explicit sensitivity to the underlying index-distribution parameters. The bound contains the simulation-observed extremes (a $3\%$ maximum reported by \citet{highley2026cola} across $1{,}000$ synthetic seasons) with $1.3\times$ headroom and provides the first parameter-explicit ceiling.
+    \item \textbf{(Section~\ref{sec:family}--\ref{sec:bound}) A family-level perspective.} We present the \cola{} family as five variants on a shared scaffold (Section~\ref{sec:family}), including \emph{Capped \cola{}} \citep{highley2026solvable5} which introduces a stockpile cap to bound the per-series cost of advancing in the playoffs. We prove an analytic per-series bound (Lemma~\ref{lem:capped-bound}): under cap $\Max$, no playoff series win ever costs a team more than $0.3 \cdot \Max$ tickets ($45$ at $\Max = 150$).
+    \item \textbf{(Section~\ref{sec:fairdiv}) A bridge to the axiomatic literature.} \citet{coreno2022axiomatic} prove that no draft rule simultaneously satisfies Respect for Priority (RP), Envy-Free up to One Object (EF1), and Strategy-Proofness (SP). Their result is single-period; \cola{}'s multi-year structure raises an open question about whether the axioms lift. We surface a preliminary mapping and identify what would need to be shown to embed \cola{} in the axiomatic literature.
 \end{itemize}
+
+A 26-season historical backtest of all five variants (Section~\ref{sec:empirical}) calibrates the bounds against real NBA data, with the Philadelphia 76ers' 2013--2017 ``Process'' as a case study in how multi-year diminishment dismantles repeat-tanking strategies that the current weighted lottery rewards.
 
 \section{Background and Related Work}
 \label{sec:background}
 
 \subsection{Effort Manipulation: The Munro-Banchio Impossibility}
 
-\citet{munro2020notanking} establish that any mechanism mapping end-of-season records to draft probabilities, while giving worse teams strictly better odds, must violate NTC. The proof constructs a minimal counterexample: two teams, both eliminated, with identical records and a final game against each other. The loser finishes with a worse record and therefore receives better draft odds; both teams prefer to lose. Only the uniform lottery satisfies NTC, but uniform odds abandon the goal of differential reward.
+\citet{munro2020notanking} establish that any mechanism mapping end-of-season records to draft probabilities, while giving worse teams strictly better odds, must violate NTC. The proof constructs a minimal counterexample: two eliminated teams with identical records and a final game between them. The loser finishes with a worse record and therefore receives better draft odds; both teams prefer to lose. Only the uniform lottery satisfies NTC, but uniform odds abandon the goal of differentially rewarding the weakest teams.
 
-The authors propose an alternative, \emph{T-IC} (Truncated Incentive Compatibility), which tracks each team's conditional probability of finishing last and freezes allocations at the moment IC would first be violated. T-IC is optimal in theory but computationally expensive, opaque to fans, and limited to single-season scope; calculation requires precise team-level valuations of playoff-versus-draft trade-offs that the league does not have, and some teams have an incentive to tank from the first game of the season, which the truncation timing does not reach.
+The authors propose \emph{T-IC} (Truncated Incentive Compatibility) as an alternative. T-IC tracks each team's conditional probability of finishing last and freezes allocations at the moment IC would first be violated. The mechanism is optimal in theory but has three practical issues. First, it is computationally expensive and opaque to fans. Second, calculating when IC would first be violated requires precise team-level valuations of playoff-versus-draft trade-offs that the league does not have access to. Third, the truncation timing assumes teams develop tanking incentives only after elimination, but some teams have an incentive to tank from the first game of the season (rebuilds with multi-year horizons), which the truncation never reaches.
 
-\subsection{Preference Manipulation: The Coreno-Balbuzanov Impossibility}
+The 2026 ``3-2-1'' reform proposal \citep{highley2026solvable5} adopts a different escape: it expands the lottery to 16 teams with bounded ball allocation (bottom 3 by record receive 2 balls, the next 7 receive 3 balls, the play-in losers receive 1 or 2 balls based on seed), totalling 37 balls and producing per-team odds of $2.7\%$, $5.4\%$, or $8.1\%$. The proposal effectively approximates a uniform lottery within an adjustment for the play-in tournament, achieving NTC at the cost of weakening differential reward. It expires in 2029, leaving the design space open for re-evaluation.
+
+\subsection{Preference Manipulation and the Axiomatic Question}
 \label{sec:fairdiv}
 
-\citet{coreno2022axiomatic} address a complementary manipulation vector: teams misreporting which players they prefer. They prove that no allocation rule simultaneously satisfies:
+\citet{coreno2022axiomatic} address a complementary manipulation channel: teams misreporting which players they prefer. They prove that no allocation rule simultaneously satisfies:
 \begin{itemize}
-    \item \textbf{Respect for Priority (RP):} higher-priority teams receive weakly better allocations~\citep{svensson1994allocation};
-    \item \textbf{Envy-Free up to One Object (EF1):} no team envies another's allocation after removing one item~\citep{lipton2004approximately,budish2011combinatorial};
+    \item \textbf{Respect for Priority (RP):} higher-priority teams receive weakly better allocations \citep{svensson1994allocation};
+    \item \textbf{Envy-Free up to One Object (EF1):} no team envies another's allocation after removing one item \citep{lipton2004approximately,budish2011combinatorial};
     \item \textbf{Strategy-Proofness (SP):} no team benefits from misreporting preferences.
 \end{itemize}
 
-The constituent axioms trace to peer-reviewed sources. RP extends Svensson's ``weak fairness'' from queue allocation to draft priority \citep{svensson1994allocation}. EF1 originates with \citep{lipton2004approximately} and is adapted to the indivisible-goods assignment setting by \citep{budish2011combinatorial}.
+The constituent axioms trace to peer-reviewed sources. RP extends Svensson's ``weak fairness'' from queue allocation to draft priority \citep{svensson1994allocation}. EF1 originates with \citet{lipton2004approximately} for indivisible-goods allocation in computer science settings, and is adapted to the assignment problem by \citet{budish2011combinatorial} in economics.
 
-Whether RP and EF1 lift from single-period draft rules to \cola{}'s multi-year mechanism is an open question. A preliminary reading: under \cola{}, longer droughts produce weakly better expected draft position, which mirrors RP if priority is identified with the multi-year ticket ranking; the graduated diminishment schedule preserves EF1 in the sense that no team prefers another's outcome once one ``lucky'' lottery win is removed. We do not assert this lift; we surface it as an axiomatic question that the workshop's audience is well placed to resolve.
+The Coreno-Balbuzanov result is single-period: it characterises one-shot allocations of indivisible items. \cola{} is multi-period: a team's priority in year $t$ is a function of its outcomes in years $t-1, t-2, \ldots$. Whether the axioms lift to this setting is open. We sketch a preliminary mapping below; we do not prove the lift, and we treat each direction as a question worth resolving rather than a theorem.
+
+\paragraph{RP under \cola{}.} Within a single season, a Classic \cola{} priority ordering is induced by the lottery index $L_i$. RP requires that higher-priority teams receive weakly better allocations. Classic \cola{} achieves this in expectation: $\E[\text{pick rank} \mid L_i] $ is monotone decreasing in $L_i / P^{(t)}$. For per-realisation RP (which is what Coreno-Balbuzanov require), the lottery's randomisation could violate the property: a team with $L_i > L_j$ may receive a worse pick than $j$ in any single draw. The standard fix in fair-allocation literature is to consider RP under the induced expected allocation, but no formal lift has been established.
+
+\paragraph{EF1 under \cola{}.} The graduated diminishment schedule (champion: $\rho = 1.0$; finals: $0.75$; conf finals: $0.5$; second round: $0.25$; first round: $0$) preserves a weak EF1-like property: after the playoff outcome is realised, no team prefers another team's running index to its own. Whether this constitutes EF1 in the formal sense (envy after the removal of a single item from the envied bundle) requires identifying the relevant ``items.'' One natural reading: the items are the picks within the lottery, and EF1 requires no team to prefer another's lottery outcome after removing the most-preferred pick. We have not verified this claim formally and offer it as a target for the workshop's audience.
+
+\paragraph{SP under \cola{}.} This is the manipulation-resistance question Section~\ref{sec:bound} addresses analytically for the pool-manipulation channel under Classic \cola{}, and Lemma~\ref{lem:capped-bound} addresses for the per-series channel under Capped \cola{}.
 
 \section{The COLA Mechanism Family}
 \label{sec:family}
 
 \subsection{Common Framework}
 
-Every \cola{} variant maintains a per-team, integer-valued state across seasons and uses that state to determine draft priority in the current season. We refer to this state as the \emph{lottery index} and write $L_i^{(t)}$ for team $i$ at the end of season $t$.
+Every \cola{} variant maintains a per-team integer-valued state across seasons and uses that state to determine draft priority in the current season. We refer to this state as the \emph{lottery index} and write $L_i^{(t)}$ for team $i$ at the end of season $t$.
 
 \begin{definition}[Lottery Index]
 \label{def:index}
@@ -133,19 +144,40 @@ L_i^{(t+1)} = \left(L_i^{(t)} + \Delta_i^{(t)}\right) \cdot \left(1 - \rho_i^{(t
 The \emph{pool} in season $t$ is $P^{(t)} = \sum_{i \in E^{(t)}} L_i^{(t)}$, where $E^{(t)}$ is the set of teams eligible for the lottery.
 \end{definition}
 
-The three components --- the eligibility set $E^{(t)}$, the increment $\Delta_i^{(t)}$, and the diminishment $\rho_i^{(t)}$ --- are the levers that distinguish the variants.
+The three components (the eligibility set $E^{(t)}$, the increment $\Delta_i^{(t)}$, and the diminishment $\rho_i^{(t)}$) are the levers that distinguish the variants.
 
 \subsection{Five Variants}
 
-\paragraph{Simple \cola{}} eliminates the lottery: eligibility is the 22 teams with zero playoff series wins (14 non-playoff teams + 8 first-round losers). Teams are ranked by drought (consecutive seasons without a playoff series win or top-3 lottery pick), tiebroken by most regular-season wins. Picks are assigned deterministically.
+The variants below trade off explainability, robustness, and per-series tanking exposure differently. Table~\ref{tab:variants} summarises the comparison.
+
+\paragraph{Simple \cola{}} eliminates the lottery: eligibility is the 22 teams with zero playoff series wins (14 non-playoff teams + 8 first-round losers). Teams are ranked by drought (consecutive seasons without a playoff series win or top-3 lottery pick), tiebroken by most regular-season wins. Draft picks are assigned deterministically.
 
 \paragraph{Simple Lottery \cola{}} shares Simple's drought state and 22-team pool. Pre-2019 NBA lottery odds (25.0\% down to 0.5\% across the worst 14 teams) are applied to the top 14 by drought; the remaining 8 receive picks 15--22 deterministically.
 
-\paragraph{Classic \cola{}} is the variant developed in detail by \citet{highley2026cola} and the variant our manipulation bound directly analyses. The eligibility set is the 14 non-playoff teams; each non-playoff team receives an increment of $\alpha = 1{,}000$ tickets per season; playoff teams receive zero increment. Diminishment is graduated: champion ($\rho = 1.0$), finals ($0.75$), conference finals ($0.5$), second round ($0.25$), first round ($0$); draft pick \#1 ($\rho = 1.0$), \#2 ($0.75$), \#3 ($0.5$), \#4 ($0.25$), \#5 and below ($0$). The lottery for picks 1--4 is weighted by lottery index ($p_i = L_i / P$); picks 5--14 are assigned by lottery-index rank.
+\paragraph{Classic \cola{}} is the variant developed in detail by \citet{highley2026cola} and the variant our manipulation bound directly analyses. The eligibility set is the 14 non-playoff teams. Each non-playoff team receives an increment of $\alpha = 1{,}000$ tickets per season; playoff teams receive zero increment. Diminishment is graduated: in the playoff channel, champion $\rho = 1.0$, finals $0.75$, conference finals $0.5$, second round $0.25$, first round $0$; in the draft channel, pick \#1 $\rho = 1.0$, \#2 $0.75$, \#3 $0.5$, \#4 $0.25$, \#5 and below $0$. The lottery for picks 1--4 is weighted by lottery index ($p_i = L_i / P$); picks 5--14 are assigned by lottery-index rank.
 
-\paragraph{Countdown \cola{}} ranks teams by McCarty number $M_i = d_i \cdot w_i$ (drought $\times$ regular-season wins). The same 22-team pool as Simple \cola{} is partitioned into nested 5-team \emph{elimination pools}; draft picks are assigned bottom-up via ticket allocation $(2, 3, 4, 5, 6)$ within each pool. The mechanism guarantees that no team falls more than four spots below its rank.
+\paragraph{Countdown \cola{}} ranks teams by \emph{McCarty number} $M_i = d_i \cdot w_i$ (drought $\times$ regular-season wins). The same 22-team pool as Simple \cola{} is partitioned into nested 5-team \emph{elimination pools}; draft picks are assigned bottom-up via ticket allocation $(2, 3, 4, 5, 6)$ within each pool. The mechanism guarantees that no team falls more than four spots below its ticket-rank.
 
-\paragraph{Capped \cola{}} \citep{highley2026solvable5} caps the lottery index at $\Max$ (default 150). The increment is $\Delta_i^{(t)} = w_i^{(t)}$ for any team finishing the regular season outside the top 6 of either conference; eligibility excludes (i) teams that won a top-5 lottery pick last season and (ii) teams that won a playoff series this season or last. Diminishment uses a six-step playoff schedule (champion, runner-up, conference finals, second round, first round, play-in winner losing R1) and a five-step draft schedule, smoothing the cliffs of Classic \cola{}.
+\paragraph{Capped \cola{}} \citep{highley2026solvable5} introduces a stockpile cap at $\Max$ (default $150$). The increment is $\Delta_i^{(t)} = w_i^{(t)}$ for any team finishing the regular season outside the top 6 of either conference; eligibility excludes (i) teams that won a top-5 lottery pick last season and (ii) teams that won a playoff series this season or last. Diminishment uses a six-step playoff schedule (champion $1.0$, runner-up $0.8$, conference finals $0.6$, second round $0.4$, first round $0.2$, play-in winner losing R1 $0.1$, play-in loser $0$) and a five-step draft schedule (\#1 $1.0$, \#2 $0.8$, \#3 $0.6$, \#4 $0.4$, \#5 $0.2$). The cap smooths the diminishment cliffs of Classic \cola{} and bounds the per-series tanking incentive (Lemma~\ref{lem:capped-bound}).
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Variant} & \textbf{Pool} & \textbf{Increment} & \textbf{Diminishment} & \textbf{Lottery} \\
+\midrule
+Simple & 22: sw $= 0$ & drought $+1$ & reset on snap & deterministic by drought \\
+Simple Lottery & 22: sw $= 0$ & drought $+1$ & reset on snap & pre-2019 NBA odds (top 14) \\
+Classic & 14: non-playoff & $\alpha = 1{,}000$ & graduated, 4 levels & weighted by index, top 4 \\
+Countdown & 22: sw $= 0$ & drought $\times$ wins & reset on snap & nested elimination pools \\
+Capped & exclusion-rule & $w_i^{(t)}$ if play-in or below & 6+5 levels, capped at $\Max$ & top-5 raffle, then by rank \\
+\bottomrule
+\end{tabular}
+\caption{The \cola{} family. ``sw $= 0$'' is shorthand for ``zero playoff series wins this season.'' Capped \cola{}'s exclusion-rule pool removes teams that won a top-5 lottery pick last season or a playoff series this/last season. Each variant occupies a distinct point on the explainability--robustness--exposure frontier; the manipulation bound (Theorem~\ref{thm:bound}) is established for Classic and the per-series bound (Lemma~\ref{lem:capped-bound}) for Capped.}
+\label{tab:variants}
+\end{table*}
 
 \subsection{Incentive Compatibility}
 
@@ -157,7 +189,7 @@ The three components --- the eligibility set $E^{(t)}$, the increment $\Delta_i^
     \item \textbf{Pool manipulation negligible:} no team can meaningfully shift its expected draft position by manipulating which other teams are in or out of the lottery pool.
     \item \textbf{No traded-pick protections:} pick trades do not interact with diminishment in a way that creates manipulation incentives.
 \end{enumerate}
-Assumptions (1)--(3) and (5) hold by construction or follow from straightforward arguments. Assumption (4) is the open one: \citet{highley2026cola} support it via 1{,}000-season simulation, observing a maximum probability gain of approximately 3\%. The next section converts this empirical observation into a closed-form analytic bound.
+Assumptions (1)--(3) and (5) hold by construction or follow from straightforward arguments. Assumption (4) is the open one: \citet{highley2026cola} support it via $1{,}000$-season simulation, observing a maximum probability gain of approximately $3\%$. Section~\ref{sec:bound} converts this empirical observation into a closed-form analytic bound.
 
 \section{Pool Manipulation Bound}
 \label{sec:bound}
@@ -172,21 +204,21 @@ The \emph{pool manipulation} channel operates as follows. Team $i$ deliberately 
 \label{prop:gain}
 The probability gain for team $i$ from a pool swap of size $\Delta = L_h - L_\ell$ is
 $
-G_i = \frac{L_i \cdot \Delta}{P \cdot (P - \Delta)}.
+G_i = L_i \cdot \Delta / [P \cdot (P - \Delta)].
 $
 \end{proposition}
 
 \begin{proof}
-Before manipulation, $p_i = L_i / P$. After the swap, the new pool is $P' = P - \Delta$ and $p_i' = L_i / P'$. The gain is $G_i = p_i' - p_i = L_i \left(\frac{1}{P - \Delta} - \frac{1}{P}\right) = \frac{L_i \cdot \Delta}{P(P - \Delta)}$.
+Before manipulation, $p_i = L_i / P$. After the swap, the new pool is $P' = P - \Delta$ and $p_i' = L_i / P'$. The gain is $G_i = p_i' - p_i = L_i \big( 1/(P - \Delta) - 1/P \big) = L_i \cdot \Delta / [P(P - \Delta)]$.
 \end{proof}
 
-When $\Delta \ll P$, the gain factors into two ratios: the manipulator's pool share ($p_i$) and the fractional pool change ($\Delta / P$). Both have structural ceilings.
+When $\Delta \ll P$ (typically $\Delta / P \approx 4\%$ in our backtest), the gain factors into two ratios: the manipulator's pool share ($p_i$) and the fractional pool change ($\Delta / P$). Both have structural ceilings, which we exploit below.
 
 \subsection{Conditioned Upper Bound}
 
 \begin{definition}[Structural Anti-Correlation]
 \label{def:anticorr}
-Let $T_{\max}$ denote the maximum consecutive non-playoff years for any team, and $T_{\text{boundary}}$ the maximum consecutive non-playoff years for a team near the playoff boundary (i.e., a team that could plausibly be pushed into the playoffs by a single loss). The index distribution exhibits \emph{structural anti-correlation} when $T_{\text{boundary}} \ll T_{\max}$: teams with the highest indices are far from the playoff boundary and thus cannot be the target of pool manipulation.
+Let $T_{\max}$ denote the maximum consecutive non-playoff years for any team, and $T_{\text{boundary}}$ the maximum consecutive non-playoff years for a team near the playoff boundary (a team that could plausibly be pushed into the playoffs by a single loss). The index distribution exhibits \emph{structural anti-correlation} when $T_{\text{boundary}} \ll T_{\max}$: teams with the highest indices are far from the playoff boundary and thus cannot be the target of pool manipulation.
 \end{definition}
 
 \begin{theorem}[Conditioned Manipulation Bound]
@@ -198,25 +230,42 @@ G_{\max} \leq \frac{T_{\max} \cdot (T_{\text{boundary}} - 1)}{(T_{\max} + n - 1)
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-The gain is maximised when $L_i$ is maximised and $\Delta / P$ is maximised. \textbf{Bounding $p_{\max}$:} the highest-index team has $L_{\max} = T_{\max} \cdot \alpha$. The minimum pool size occurs when one team has $T_{\max}$ years of accumulation and the remaining $n-1$ teams each have the minimum $\alpha$: $P_{\min} = (T_{\max} + n - 1) \cdot \alpha$. Thus $p_{\max} \leq T_{\max} / (T_{\max} + n - 1)$. \textbf{Bounding $\Delta / P$:} the team being pushed out has at most $T_{\text{boundary}} \cdot \alpha$ tickets, and the team replacing it has at least $\alpha$, so $\Delta_{\max} = (T_{\text{boundary}} - 1) \cdot \alpha$. In steady state, $P \approx n \cdot \bar{k} \cdot \alpha$. Combining via the first-order approximation yields the stated bound.
+The gain is maximised when $L_i$ is maximised and $\Delta / P$ is maximised. \emph{Bounding $p_{\max}$:} the highest-index team has $L_{\max} = T_{\max} \cdot \alpha$. The minimum pool size occurs when one team has $T_{\max}$ years of accumulation and the remaining $n - 1$ teams each have the minimum $\alpha$: $P_{\min} = (T_{\max} + n - 1) \cdot \alpha$. Thus $p_{\max} \leq T_{\max} / (T_{\max} + n - 1)$. \emph{Bounding $\Delta / P$:} the team being pushed out has at most $T_{\text{boundary}} \cdot \alpha$ tickets, and the team replacing it has at least $\alpha$, so $\Delta_{\max} = (T_{\text{boundary}} - 1) \cdot \alpha$. In steady state, $P \approx n \cdot \bar{k} \cdot \alpha$. Combining via the first-order approximation yields the stated bound.
 \end{proof}
 
-\paragraph{Empirical calibration.} Using $T_{\max} = 10$ (the longest observed steady-state non-playoff stretch in our 26-season backtest), $T_{\text{boundary}} = 5$, $n = 14$, and $\bar{k} = 3.1$ (an average team has roughly three years of carry-over before reset, matching the original paper's observation), we obtain
-$
-G_{\max} \leq 10 \cdot 4 / (23 \cdot 14 \cdot 3.1) \approx 4.0\%.
-$
-This contains the simulation-observed maximum of 3.0\% across 1{,}000 seasons \citep{highley2026cola} with approximately $1.3\times$ headroom. An independent 200-season Bradley-Terry simulation we ran confirms the bound, with observed maximum gain of 1.70\% (Figure~\ref{fig:bound}).
+\paragraph{Empirical calibration.} We instantiate the bound with $T_{\max} = 10$ (the longest steady-state non-playoff stretch in our 26-season backtest, observed for the Sacramento Kings prior to their 2022--23 first-round appearance), $T_{\text{boundary}} = 5$ (a conservative ceiling on the consecutive non-playoff years a near-boundary team can accumulate before improving enough to clear the boundary), $n = 14$ (the structural count of NBA non-playoff teams), and $\bar{k} = 3.1$ (an average team has roughly three years of carry-over before reset, matching the original paper's observation). These yield
+\begin{equation*}
+G_{\max} \leq \frac{10 \cdot 4}{23 \cdot 14 \cdot 3.1} \approx 4.0\%,
+\end{equation*}
+which contains the simulation-observed maximum of $3.0\%$ across $1{,}000$ seasons \citep{highley2026cola} with $1.3\times$ headroom. An independent 200-season Bradley-Terry simulation we ran confirms the bound, with observed maximum gain of $1.70\%$.
 
 \begin{figure}[t]
 \centering
+\begin{minipage}{0.48\columnwidth}
+\centering
+\includegraphics[width=\columnwidth]{figures/bound_sensitivity.pdf}
+\caption*{(a) Bound vs.\ $T_{\max}, T_{\text{boundary}}$.}
+\end{minipage}\hfill
+\begin{minipage}{0.48\columnwidth}
+\centering
 \includegraphics[width=\columnwidth]{figures/bound_vs_sim.pdf}
-\caption{Analytic bound (red) vs.\ simulation distribution across 200 Bradley-Terry seasons. The bound contains all simulated outcomes with margin.}
+\caption*{(b) Analytic bound vs.\ simulation.}
+\end{minipage}
+\caption{Manipulation bound. (a) Sensitivity to the structural-anti-correlation parameters; the bound is most sensitive to $T_{\text{boundary}}$, and stays under $5\%$ for $T_{\text{boundary}} \leq 5$. (b) Analytic bound (red) vs.\ the empirical distribution of manipulation gains across 200 Bradley-Terry-simulated seasons; the bound contains all simulated outcomes with margin.}
 \label{fig:bound}
 \end{figure}
 
+\subsection{Sensitivity, Coalitions, and the Pick-Value Gap}
+
+The bound's parameter sensitivity (Figure~\ref{fig:bound}a) shows that $T_{\text{boundary}}$ is the dominant lever: even under pessimistic assumptions ($T_{\text{boundary}} = 7$), the bound stays under $7\%$, and under realistic conditions ($T_{\text{boundary}} \leq 5$) it stays under $5\%$. This matters operationally because $T_{\text{boundary}}$ is the empirical quantity most amenable to direct measurement.
+
+For completeness, coalitional manipulation (two or more teams coordinating to shrink the pool) does not amplify individual gains. Joint gain for a coalition $\{A, B\}$ is $(L_A + L_B) \cdot \Delta / [P(P - \Delta)]$. Even at $30\%$ joint pool share, the gain remains $\leq 1.3\%$, and per-member gain cannot exceed the highest-index individual's gain. Coordination costs (detection risk, trust problems, sequential uncertainty) further dampen the channel.
+
+The bound addresses the \emph{probability} term of the manipulation incentive. The \emph{value} term (the pick-value gap $d_k - d_{k+1}$ between adjacent draft positions) has no formal ceiling in the original specification, though it is bounded for any realistic draft class. Closing assumption (4) entirely would also require a separate argument capping $d_k - d_{k+1}$ via the distribution of draft-eligible prospect quality. We leave this to future work.
+
 \subsection{Per-Series Bound for Capped \cola{}}
 
-Capped \cola{} introduces a fourth manipulation channel: tanking through the playoffs themselves (declining to advance in order to retain stockpile). The cap converts the playoff-diminishment schedule from a fraction-of-current-stockpile cost (unbounded above when the stockpile grows large) to a fraction-of-$\Max$ cost (bounded by construction).
+Capped \cola{} introduces a fourth manipulation channel: tanking through the playoffs themselves (a team within the cap declining to advance, in order to retain its stockpile). The cap converts the playoff-diminishment schedule from a fraction-of-current-stockpile cost (unbounded above when stockpile grows large) to a fraction-of-$\Max$ cost (bounded by construction).
 
 \begin{lemma}[Per-Series Tanking Cost]
 \label{lem:capped-bound}
@@ -227,25 +276,60 @@ Let $\Max$ be the Capped \cola{} stockpile cap. For any team entering the playof
 0.2 \cdot \Max & \text{any other series advancement.}
 \end{cases}
 \end{equation*}
-At $\Max = 150$, the bound is 45 tickets for the play-in case and 30 tickets for each subsequent series.
+At $\Max = 150$, the bound is $45$ tickets for the play-in case and $30$ tickets for any subsequent series.
 \end{lemma}
 
 \begin{proof}
-Reading off Capped \cola{}'s six-step diminishment schedule, the per-series increments in the diminishment fraction $\Delta\rho$ are: play-in advancer round 1 ($\rho_{\text{lose}} = 0.1$, $\rho_{\text{advance}} = 0.4$, $\Delta\rho = 0.3$); standard round 1 ($0.2 \to 0.4$, $\Delta\rho = 0.2$); round 2 ($0.4 \to 0.6$); conference finals ($0.6 \to 0.8$); finals ($0.8 \to 1.0$). All non-play-in transitions yield $\Delta\rho = 0.2$. The cost in tickets is $\Delta\rho \cdot L_i^{\text{pre}} \leq \Delta\rho \cdot \Max$, with equality at the cap.
+Reading off Capped \cola{}'s six-step diminishment schedule, the per-series increments in the diminishment fraction $\Delta\rho$ are: play-in advancer round 1 ($\rho_{\text{lose}} = 0.1$, $\rho_{\text{advance}} = 0.4$, $\Delta\rho = 0.3$); standard round 1 ($0.2 \to 0.4$, $\Delta\rho = 0.2$); round 2 to conference finals ($0.4 \to 0.6$); conference finals to NBA finals ($0.6 \to 0.8$); finals to championship ($0.8 \to 1.0$). All non-play-in transitions yield $\Delta\rho = 0.2$. The cost in tickets is $\Delta\rho \cdot L_i^{\text{pre}} \leq \Delta\rho \cdot \Max$, with equality at the cap.
 \end{proof}
 
-The bound makes the playoff-tanking incentive transparent at the league level: at $\Max = 150$, no single series win ever costs a team more than 45 lottery tickets, which is approximately a year and a half of accumulation for a team near the wins-increment ceiling.
+The bound makes the playoff-tanking incentive transparent at the league level: at $\Max = 150$, no single series win ever costs a team more than $45$ lottery tickets, which is approximately a year and a half of accumulation for a team near the wins-increment ceiling. The cumulative regret for a finals-losing team at the cap is $0.8 \cdot \Max = 120$ tickets, decomposed into per-series increments per Lemma~\ref{lem:capped-bound}.
+
+\subsection{Three Closures of Assumption (4)}
+
+The pool-manipulation gap (assumption~(4) in Section~\ref{sec:family}) admits at least three closure strategies, each represented in the literature.
+\begin{itemize}
+\item \textbf{Empirical closure:} \citet{highley2026cola} simulate $1{,}000$ synthetic seasons under Bradley-Terry and observe a maximum gain of $\sim 3\%$. The closure is statistical: the assumption holds in the typical case but admits no parameter-explicit ceiling.
+\item \textbf{Behavioral closure:} the companion formal-proof video to \citep{highley2026cola} introduces an additional behavioral assumption $G > $ expected pool-manipulation gain (where $G$ is the value of a single regular-season win), eliminating the channel via preference structure rather than mechanism design.
+\item \textbf{Analytic closure (this paper):} Theorem~\ref{thm:bound} provides a closed-form upper bound conditioned on structural properties of the index distribution. The bound is parameter-explicit and admits sensitivity analysis (Figure~\ref{fig:bound}a).
+\end{itemize}
+The three closures compose: any practical \cola{} deployment can rely on whichever closure best matches the available evidence. Our contribution is the analytic option, which previously did not exist.
 
 \section{Empirical Validation}
 \label{sec:empirical}
 
-\subsection{Backtesting Engine}
+\subsection{Backtesting Methodology}
 
-We compute \cola{} state for every team across 26 NBA seasons (1999--2025), using verified Basketball Reference data: 775 team-season records, 776 first-round draft picks, and 55 lottery-day-attributed pre-draft pick trades. The engine separates pre-draft state (Phase A, used for draft probability calculations) from post-draft diminishment (Phase B, carried forward to the next season). Cold-start effects stabilise by approximately season 5; we report aggregates over the 21 stable seasons (2005--2025).
+We compute \cola{} state for every team across 26 NBA seasons (1999--2025) using verified Basketball Reference data: 775 team-season records, 776 first-round draft picks, and 55 lottery-day-attributed pre-draft pick trades. The engine separates pre-draft state (Phase A, used for draft-probability calculations) from post-draft diminishment (Phase B, carried forward to the next season). Cold-start effects stabilise by approximately season 5; we report aggregates over 21 stable seasons (2005--2025).
 
-\subsection{Capped COLA Cap Calibration}
+Two methodological points warrant attention. First, an audit of all 364 lottery picks (14 picks $\times$ 26 seasons) identified 8 instances where the draft-day holder differed from the lottery-day holder via post-lottery trades. \cola{} requires \emph{lottery-day} attribution: the team that held the pick when the lottery ran absorbs the diminishment, regardless of who selects. Second, the backtest is \emph{static}: it applies \cola{} rules to actual historical outcomes. Under a real \cola{} regime, draft outcomes would differ in ways that change future drought lengths and indices. We caveat the comparative cross-variant claims accordingly.
 
-Capped \cola{} is parameterised by a single tunable constant $\Max$. The cap controls the trade-off between (i) ordering resolution at the top of the lottery (a higher cap permits more separation between the highest-stockpile teams) and (ii) the per-series tanking exposure of Lemma~\ref{lem:capped-bound} (a higher cap raises the maximum cost of advancing past round 1). Table~\ref{tab:cap-sweep} reports the 21-stable-season aggregates from a sweep over $\Max \in \{75, 100, 125, 150, 175, 200\}$.
+\subsection{Case Study: The Philadelphia ``Process''}
+
+The 2013--14 through 2016--17 Philadelphia 76ers represent the canonical strategic-tanking sequence in modern NBA history: four consecutive top-3 lottery outcomes (picks \#3, \#3, \#1, \#3) acquired through deliberate multi-season non-competitiveness. Under the current weighted lottery, each tanked season yielded a top-tier pick. Under Classic \cola{}, graduated diminishment makes the same sequence self-defeating. Table~\ref{tab:phi} shows Philadelphia's Classic \cola{} trajectory.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+Season & W--L & Pick & \cola{} index & Rank \\
+\midrule
+2013--14 & 19--63 & \#3 & 2{,}750 & 8/14 \\
+2014--15 & 18--64 & \#3 & 2{,}375 & 9/14 \\
+2015--16 & 10--72 & \#1 & 2{,}188 & 10/14 \\
+2016--17 & 28--54 & \#3 & 1{,}000 & 14/14 \\
+\bottomrule
+\end{tabular}
+\caption{Philadelphia 76ers under Classic \cola{} during the ``Process.'' Each top-3 pick triggers graduated diminishment (\#1: full reset; \#3: 50\% reduction), leaving Philadelphia at the bottom of the lottery pool by the fourth tanking season despite a 10--72 record. The Sacramento Kings hold the top Classic \cola{} index throughout this period, climbing from $7{,}250$ in 2013--14 to $10{,}250$ in 2016--17 via organic non-competitiveness.}
+\label{tab:phi}
+\end{table}
+
+Two properties emerge. First, diminishing returns to repeat tanking: the Classic \cola{} diminishment schedule ($\{1.0, 0.75, 0.5, 0.25\}$ for picks \#1--4) dominates the $\alpha = 1{,}000$ annual accumulation, so a team that receives a top-3 pick in year $t$ cannot re-enter the top of the lottery in year $t + 1$ through tanking alone. Second, pick attribution matters: the comparison is sensitive to who holds the pick on lottery day. The 2017 Boston-Philadelphia Fultz/Tatum swap was a post-lottery trade; under our convention, Boston's index absorbs the \#1 diminishment, not Philadelphia's.
+
+\subsection{Capped \cola{} Cap Calibration}
+
+Capped \cola{} is parameterised by a single tunable constant $\Max$. The cap controls the trade-off between (i) ordering resolution at the top of the lottery (a higher cap permits more separation between the highest-stockpile teams) and (ii) per-series tanking exposure (Lemma~\ref{lem:capped-bound}: a higher cap raises the cost of advancing past round 1). Table~\ref{tab:cap-sweep} reports 21-stable-season aggregates from a sweep over $\Max \in \{75, 100, 125, 150, 175, 200\}$.
 
 \begin{table*}[t]
 \centering
@@ -262,24 +346,31 @@ $\Max$ & Teams at cap (mean) & Teams at cap (max) & Sep.\ R1--R5 (mean) & Per-se
 200 & 0.52 & 2 & 76.4 & 60.0 & 76.8 \\
 \bottomrule
 \end{tabular}
-\caption{Capped \cola{} aggregates across 21 stable seasons (2005--2025). Per-series cost max $= 0.3 \cdot \Max$ from Lemma~\ref{lem:capped-bound}; cumulative regret max is the worst empirical observation. The bolded $\Max = 150$ row is the variant's published default \citep{highley2026solvable5}.}
+\caption{Capped \cola{} aggregates across 21 stable seasons (2005--2025). Per-series cost max $= 0.3 \cdot \Max$ (Lemma~\ref{lem:capped-bound}); cumulative regret max is the worst empirical observation. The bolded $\Max = 150$ row is the variant's published default \citep{highley2026solvable5}.}
 \label{tab:cap-sweep}
 \end{table*}
 
-Three patterns emerge. Sub-100 caps over-compress the lottery: at $\Max = 75$, more than six teams sit at the cap on average and the rank-1 vs.\ rank-5 separation collapses to under 1 ticket. Caps above 175 erase the cap's purpose: fewer than one team sits at the cap on average. The published $\Max = 150$ choice produces fewer than two teams at the cap in 19 of 21 stable seasons and at most three in any single season, matching the variant's published headline ``no more than three teams at the maximum at a time, and on average fewer than two.''
+Three patterns emerge. Sub-100 caps over-compress the lottery: at $\Max = 75$, more than six teams sit at the cap on average and the rank-1 vs.\ rank-5 separation collapses to under one ticket, destroying the priority signal the family inherits from Classic. Caps above 175 erase the cap's purpose: fewer than one team sits at the cap on average, and the per-series exposure approaches the unbounded behaviour of Classic. The published $\Max = 150$ choice produces fewer than two teams at the cap in 19 of 21 stable seasons and at most three in any single season, matching the stated headline of ``no more than three teams at the maximum at a time, and on average fewer than two'' \citep{highley2026solvable5}.
 
-\subsection{Cross-Variant Comparison}
+\subsection{A Note on Trade Handling}
 
-The five variants rank teams differently under identical historical data. In 2024--25, the Sacramento Kings lead Classic \cola{}'s ticket pool (16-season drought, accumulated index 11{,}250) but Chicago leads Simple, Simple Lottery, and Countdown \cola{} (longest-running multi-year stretch by drought count alone). Capped \cola{} places multiple teams at the cap simultaneously, eliminating the differential between long-rebuilding franchises in a single year and trading resolution for a bounded per-series exposure.
+A practical question for any deployment is how diminishment interacts with traded picks. \citet{highley2026solvable4} identifies four options: (1) traded picks affect neither team's index; (2) the original holder's index absorbs the diminishment; (3) the receiving team's index absorbs the diminishment; (4) the diminishment is split. Each option has different incentive properties. Option (2) preserves the link between record and diminishment but over-penalises teams that traded picks years before knowing they would be top-tier (e.g., the 2011 Clippers, who traded a future first that eventually became Cleveland's Kyrie Irving pick). Option (3) rewards the wrong actor when the recipient did not earn the pick through their own record. \citet{highley2026solvable4} recommends option (2) paired with a strengthened Stepien Rule (a cap on the number of future firsts a team can trade), which limits the frequency at which option (2)'s over-penalisation surfaces. We do not extend the analysis here; we flag it as a practical implementation question that any \cola{} deployment will face.
 
-\section{Discussion}
+\section{Discussion and Open Directions}
 \label{sec:discussion}
 
-The bounds in this paper establish that \cola{}'s open assumption (4) is bounded by approximately 4\% under empirically calibrated parameters, and that the additional manipulation channel introduced by Capped \cola{}'s cap is bounded at $0.3 \cdot \Max$ tickets per series. Combined, the four manipulation channels available under Capped \cola{}---single-season tanking (zero, by construction), pool manipulation ($\sim$4\% probability gain), multi-year strategic tanking (bounded by the diminishment schedule), and per-series playoff tanking (45 tickets at $\Max = 150$)---compose to a small joint exposure relative to the status-quo lottery, where repeat tanking has memoryless returns.
+The bounds in this paper formalise the manipulation-resistance properties of the \cola{} family. Theorem~\ref{thm:bound} bounds the open assumption (4) in Classic \cola{}'s incentive-compatibility argument at approximately $4\%$ under empirically calibrated parameters, with explicit sensitivity to $T_{\max}$, $T_{\text{boundary}}$, $n$, and $\bar{k}$. Lemma~\ref{lem:capped-bound} bounds the per-series exposure that Capped \cola{}'s stockpile cap was designed to address. Combined, the four manipulation channels available under Capped \cola{} (single-season tanking, pool manipulation, multi-year strategic tanking, and per-series playoff tanking) compose to a small joint exposure relative to the status-quo lottery, where repeat tanking has memoryless returns.
 
-The 2026 NBA reform proposal known as ``3-2-1'' adopts a different escape from the Munro-Banchio impossibility: it expands the lottery to 16 teams with a bounded-spread ball allocation that approximates the uniform lottery within an adjustment for the play-in tournament. The proposal includes a three-year re-evaluation provision \citep{highley2026solvable5}. \cola{}'s contribution to that re-evaluation conversation is the multi-year-history dimension that 3-2-1 omits, and the bounds in this paper formalise the manipulation properties that any future-iteration discussion will need.
+The 2026 NBA reform produced ``3-2-1,'' which approximates a uniform lottery within an adjustment for the play-in tournament \citep{highley2026solvable5}. The proposal expires in 2029, leaving the design space open. \cola{}'s contribution to that re-evaluation is the multi-year-history dimension, which 3-2-1 omits, and the family-level perspective, which gives policymakers a continuum of explainability--robustness trade-offs rather than a single point. The bounds in this paper formalise the manipulation properties the conversation will need.
 
-Two open directions extend this work. First, the structural anti-correlation in Definition~\ref{def:anticorr} is calibrated, not formally derived; a stationarity argument that bounds $T_{\text{boundary}}$ as a function of league parameters would close Assumption (4) entirely. Second, the lift from \citet{coreno2022axiomatic}'s axioms to multi-period priority mechanisms (Section~\ref{sec:fairdiv}) is open: whether \cola{}'s ticket ordering satisfies RP and EF1 in a formal sense is a fair-division question on which workshop participants are well placed to make progress.
+\paragraph{Open directions.} Three follow-on questions extend this work.
+\begin{itemize}
+    \item \emph{Tighter manipulation bound.} The structural anti-correlation in Definition~\ref{def:anticorr} is a calibrated assumption rather than a formally derived consequence of the mechanism. A stationarity argument that bounds $T_{\text{boundary}}$ as a function of league parameters (number of teams, season length, playoff structure) would close assumption (4) entirely.
+    \item \emph{Pick-value gap.} Combining the probability bound (this paper) with a separate bound on the pick-value gap $d_k - d_{k+1}$, derived from the distribution of draft-eligible prospect quality, would close the manipulation incentive in absolute terms, not just in probability.
+    \item \emph{Axiomatic embedding.} The lift from \citet{coreno2022axiomatic}'s axioms (RP, EF1, SP) to multi-period priority mechanisms remains open. Section~\ref{sec:fairdiv} sketches the mapping; a formal verification would embed \cola{} in the existing axiomatic literature on assignment mechanisms and clarify which one-period impossibilities transfer to multi-period settings. We see this as the most natural follow-on for the workshop's audience.
+\end{itemize}
+
+A reproducibility artifact accompanies this paper: an interactive backtester implementing all five \cola{} variants plus the 3-2-1 proposal across 26 NBA seasons, with locked-seed Monte Carlo for Countdown \cola{} probabilities. The artifact and audit scripts are available at the URL listed in the references.
 
 \bibliographystyle{named}
 \bibliography{references}
