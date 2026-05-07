@@ -9,6 +9,9 @@ paper/*.synctex*
 paper/*.fls
 paper/*.fdb_latexmk
 
+# Email-ready PDF copies (built via cp from main.pdf at send time)
+paper/Manipulation-Bound-for-the-COLA-Family.pdf
+
 # macOS
 .DS_Store
 
